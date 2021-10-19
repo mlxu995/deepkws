@@ -15,18 +15,20 @@ import torch.nn as nn
 import speechbrain as sb
 from speechbrain.nnet.pooling import StatisticsPooling
 from speechbrain.nnet.linear import Linear
+from depsep_conv import SeparableConv2d
 
 
 class ResNetBlock(nn.Module):
   
-  def __init__(self, num_channels, kernel_size=3, dilation=1, activation=torch.nn.ReLU):
+  def __init__(self, num_channels, kernel_size=3, dilation=1, activation=torch.nn.ReLU, bias=False, separable_conv=False):
     super().__init__()
+    conv_layer = SeparableConv2d if separable_conv else nn.Conv2d
     dilation1 = int(2**(2*dilation // 3))
     dilation2 = int(2**((2*dilation+1) // 3))
-    self.conv1 = nn.Conv2d(num_channels, num_channels, kernel_size, padding=dilation1, dilation=dilation1, bias=False)
+    self.conv1 = conv_layer(num_channels, num_channels, kernel_size, padding=dilation1, dilation=dilation1, bias=bias)
     self.bn1 = nn.BatchNorm2d(num_channels)
     self.activation1 = activation()
-    self.conv2 = nn.Conv2d(num_channels, num_channels, kernel_size, padding=dilation2, dilation=dilation2, bias=False)
+    self.conv2 = conv_layer(num_channels, num_channels, kernel_size, padding=dilation2, dilation=dilation2, bias=bias)
     self.bn2 = nn.BatchNorm2d(num_channels)
     self.activation2 = activation()
   
@@ -76,6 +78,8 @@ class SpeechResModel(torch.nn.Module):
         kernel_sizes=3,
         in_channels=1,
         res_pool=True,
+        bias=False,
+        separable_conv=False,
     ):
 
         super().__init__()
@@ -88,7 +92,7 @@ class SpeechResModel(torch.nn.Module):
                         out_channels=out_channels,
                         kernel_size=kernel_sizes,
                         padding=1, 
-                        bias=False,
+                        bias=bias,
                     ),
                  activation(),
              ]
@@ -99,17 +103,18 @@ class SpeechResModel(torch.nn.Module):
             )
         # ResNet blocks
         for block_index in range(res_blocks):
-            self.blocks.append(ResNetBlock(out_channels, kernel_size=kernel_sizes, dilation=block_index, activation=activation))
+            self.blocks.append(ResNetBlock(out_channels, kernel_size=kernel_sizes, dilation=block_index, activation=activation, bias=bias, separable_conv=separable_conv))
         # last CNN layers
+        conv_layer = SeparableConv2d if separable_conv else nn.Conv2d
         self.blocks.extend(
             [
-                nn.Conv2d(
+                conv_layer(
                     in_channels=out_channels,
                     out_channels=out_channels,
                     kernel_size=kernel_sizes,
                     padding=int(2 ** (2 * res_blocks // 3)),
                     dilation=int(2 ** (2 * res_blocks // 3)),
-                    bias=False,
+                    bias=bias,
                 ),
                 nn.BatchNorm2d(out_channels),
                 activation(),
