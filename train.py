@@ -23,9 +23,6 @@ from hyperpyyaml import load_hyperpyyaml
 from speechbrain.utils.distributed import run_on_main
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
-
 class SpeakerBrain(sb.core.Brain):
     """Class for GSC training"
     """
