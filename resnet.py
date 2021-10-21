@@ -16,6 +16,7 @@ import speechbrain as sb
 from speechbrain.nnet.pooling import StatisticsPooling
 from speechbrain.nnet.linear import Linear
 from depsep_conv import SeparableConv2d
+from squeeze_and_excitation import SqueezeExcitationBlock
 
 
 class ResNetBlock(nn.Module):
@@ -80,6 +81,7 @@ class SpeechResModel(torch.nn.Module):
         res_pool=True,
         bias=False,
         separable_conv=False,
+        se_block=False,
     ):
 
         super().__init__()
@@ -97,6 +99,12 @@ class SpeechResModel(torch.nn.Module):
                  activation(),
              ]
         )
+
+        # add SE block
+        if se_block:
+            self.blocks.append(SqueezeExcitationBlock(out_channels))
+
+        # add avg_pooling layer
         if res_pool:
             self.blocks.append(
                 nn.AvgPool2d((2, 2))
