@@ -11,7 +11,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 # Use 12 for V2 12 task and 35 for V2 35 task
 number_of_commands: 12
 exp_folder: /home/mlxu/exp/GSC
-output_folder: !ref <exp_folder>/results/kws_v<number_of_commands>/<seed>_b64-c45-l6
+output_folder: !ref <exp_folder>/results/kws_v<number_of_commands>/<seed>_b64-sc64-l7-sen
 save_folder: !ref <output_folder>/save
 
 # Data files
@@ -71,12 +71,12 @@ compute_features: !new:speechbrain.lobes.features.Fbank
 embedding_model: !new:resnet.SpeechResModel
     in_channels: 1
     activation: !name:torch.nn.LeakyReLU
-    res_blocks: 6
-    out_channels: 45
+    res_blocks: 7
+    out_channels: 64
     kernel_sizes: 3
-    res_pool: True
+    res_pool: False
     bias: False
-    separable_conv: False
+    separable_conv: True
 
 classifier: !new:resnet.Classifier
     input_dim: !ref <embedding_model[out_channels]>
