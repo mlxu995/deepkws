@@ -8,7 +8,7 @@ class SqueezeExcitationBlock(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.layers = nn.Sequential(
             nn.Linear(num_channel, num_channel // reduction, bias=bias),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(num_channel // reduction, num_channel, bias=bias),
             nn.Sigmoid()
         )
